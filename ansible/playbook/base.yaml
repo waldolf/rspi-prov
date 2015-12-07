@@ -1,0 +1,59 @@
+- hosts: 127.0.0.1
+  connection: local
+  sudo: Yes
+  vars_prompt:
+    - name: "git_user"
+      prompt: "Please enver git user"
+      private: no
+      confirm: no
+      default: null
+    - name: "git_password"
+      prompt: "Please enter git password"
+      private: yes
+      confirm: no
+      default: null
+    - name: "wifi_ssid"
+      prompt: "Please enter wifi ssid"
+      private: yes
+      confirm: no
+      default: null
+    - name: "wifi_pass"
+      prompt: "Please enter wifi password"
+      private: yes
+      confirm: no
+      default: null
+  vars_files:
+    - "{{ vars_file }}"
+  tasks:
+    - name: get private ip
+      shell: ip a | grep 'inet 100.' | awk '{print $2}' | cut -d"/" -f1
+      register: private_ip
+
+    - name: make directory (k8s).
+      file: dest=/opt/k8s/ state=directory
+
+    - name: journal log settting.
+      shell: sed -i -e "s/#SystemMaxUse=/SystemMaxUse=256M/" /etc/systemd/journald.conf
+
+    - name: change power management
+      shell: echo "options 8192cu rtw_power_mgnt=0 rtw_enusbss=1 rtw_ips_mode=1" >  /etc/modprobe.d/8192cu.conf
+      register: private_ip
+
+    - name: change sshd client interval
+      shell: echo "ClientAliveInterval 10" >> /etc/ssh/sshd_config
+
+    - name: setup wifi1
+      shell: lsusb 
+
+    - name: setup wifi2
+      shell: sudo sh -c 'wpa_passphrase {{ wifi_ssid }} {{ wifi_pass }} >> /etc/wpa_supplicant/wpa_supplicant.conf'
+
+    - name: setup wifi3
+      shell: sed -e "s/#//g"
+
+    - name: restart network
+      service: name=networking state=restarted
+
+    - name: apt-get install nginx
+      apt: pkg=nginx
+
