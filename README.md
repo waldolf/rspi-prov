@@ -1,4 +1,4 @@
 # rspi-prov
-Initial set up of respbery pi with ansible.
+Initial set up of raspberry pi with ansible.
  - wifi
  - power management
